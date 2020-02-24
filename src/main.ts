@@ -1,9 +1,16 @@
 import {BehaviorSubject, combineLatest, fromEvent, interval} from 'rxjs';
-import {map, scan, startWith, switchAll, switchMap, takeWhile} from 'rxjs/operators';
+import {
+    filter,
+    map, mapTo,
+    scan,
+    startWith,
+    switchAll,
+    switchMap,
+} from 'rxjs/operators';
 import {Letters, State} from './interfaces';
 
 const randomLetter: () => string = () => String.fromCharCode(Math.random() * ('z'.charCodeAt(0) - 'a'.charCodeAt(0)) + 'a'.charCodeAt(0));
-const levelChangeThreshold = 2;
+const levelChangeThreshold = 20;
 const speedAdjust = 50;
 const endThreshold = 15;
 const gameWidth = 30;
@@ -82,7 +89,13 @@ const game$ = combineLatest([keys$, letters$])
                 level: 1
             }
         ),
-        takeWhile(state => state.letters.length < endThreshold),
     );
 
-game$.subscribe(renderGame, (err) => console.warn(err), renderGameOver);
+const startGame$ = fromEvent(document, 'keydown')
+    .pipe(
+        filter(e => e.keyCode === 13),
+        mapTo(game$),
+        switchAll()
+    );
+
+startGame$.subscribe(renderGame, (err) => console.warn(err), renderGameOver);
